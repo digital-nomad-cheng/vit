@@ -1,18 +1,20 @@
 [project]
 name = "vit"
-version = "0.1.0"
+version = "0.9.9"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "torch",
-    "torchvision",
-    "torchaudio",
-    "torchtext",
-    "spacy",
-    "jupyter",
-    "seaborn",
-    "pillow",
+    "torch==2.6.0+cu124",
+    "torchvision==0.21.0+cu124",
+    "torchaudio==2.6.0+cu124",
+    "torchtext==0.6.0",
+    "spacy==3.8.11",
+    "jupyter==1.1.1",
+    "seaborn==0.13.2",
+    "pillow==12.0.0",
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+    "de-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.8.0/de_core_news_sm-3.8.0-py3-none-any.whl",
 ]
 
 [[tool.uv.index]]
