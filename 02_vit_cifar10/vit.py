@@ -1,4 +1,3 @@
-import re
 import torch
 import torch.nn as nn
 from torch.nn import Module, ModuleList

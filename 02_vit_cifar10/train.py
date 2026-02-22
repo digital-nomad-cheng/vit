@@ -129,8 +129,8 @@ def train_one_epoch(model: nn.Module, loader: DataLoader, criterion: nn.Module,
 
 def parse_args():
     p = argparse.ArgumentParser(description="Train TNT on CIFAR-10")
-    p.add_argument("--data-dir",     default="./data",               help="Dataset directory")
-    p.add_argument("--ckpt-dir",     default="./checkpoints/tnt_cifar10", help="Checkpoint directory")
+    p.add_argument("--data-dir",     default="./.data",               help="Dataset directory")
+    p.add_argument("--ckpt-dir",     default="./.data/checkpoints/", help="Checkpoint directory")
     p.add_argument("--epochs",       type=int,   default=100)
     p.add_argument("--batch-size",   type=int,   default=256)
     p.add_argument("--lr",           type=float, default=5e-4)
@@ -146,7 +146,6 @@ def parse_args():
 def main():
     args = parse_args()
     device = torch.device(args.device)
-    os.makedirs(args.ckpt_dir, exist_ok=True)
 
     print(f"Device : {device}")
 
@@ -157,10 +156,13 @@ def main():
     # ----- Model -----
     if args.model == "tnt":
         model = build_tnt(num_classes=10).to(device)
+        args.checkpoint_dir = os.path.join(args.ckpt_dir, "tnt_cifar10")
     elif args.model == "vit":
         model = build_vit(num_classes=10).to(device)
+        args.checkpoint_dir = os.path.join(args.ckpt_dir, "vit_cifar10")
     else: 
         raise ValueError(f"Unknown model: {args.model}")
+    os.makedirs(args.ckpt_dir, exist_ok=True)
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Parameters: {n_params:,}")
 

@@ -208,10 +208,10 @@ class PatchEmbed(nn.Module):
         # FIXME look at relaxing size constraints
         assert H == self.img_size[0] and W == self.img_size[1], \
             f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
-        x = self.unfold(x) # B, Ck2, N
-        x = x.transpose(1, 2).reshape(B * self.num_patches, C, *self.patch_size) # B*N, C, 16, 16
-        x = self.proj(x) # B*N, C, 8, 8
-        x = x.reshape(B * self.num_patches, self.inner_dim, -1).transpose(1, 2) # B*N, 8*8, C
+        x = self.unfold(x) # B, C*patch_size*patch_size(16*16=256), num_patches(14*14=196)
+        x = x.transpose(1, 2).reshape(B * self.num_patches, C, *self.patch_size) # B*num_patches, C, 16, 16
+        x = self.proj(x) # B*num_patches, self.inner_dim, 4, 4
+        x = x.reshape(B * self.num_patches, self.inner_dim, -1).transpose(1, 2) # B*num_patches, 4*4, self.inner_dim
         return x
 
 
