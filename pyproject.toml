@@ -18,6 +18,8 @@ dependencies = [
     # Or download with:
     # uv run python -m spacy download en_core_web_sm
     # uv run python -m spacy download de_core_news_sm
+    "timm==1.0.24",
+    "einops==0.8.2",
 ]
 
 [[tool.uv.index]]

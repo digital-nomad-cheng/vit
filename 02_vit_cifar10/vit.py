@@ -21,7 +21,7 @@ class FeedForward(Module):
             nn.Dropout(dropout)
         )
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.net(x)
 
 class Attention(Module):
@@ -59,18 +59,18 @@ class Attention(Module):
         return self.to_out(out)
 
 class Transformer(Module):
-    def __init__(self, dim, depth, num_heads, mlp_dim, dropout=0.1):
+    def __init__(self, dim, depth, num_heads, dim_head, mlp_dim, dropout=0.1):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
         self.layers = ModuleList([])
 
         for _ in range(depth):
             self.layers.append(nn.ModuleList([
-                Attention(dim, num_heads=num_heads, dropout=dropout),
+                Attention(dim, num_heads=num_heads, dim_head=dim_head, dropout=dropout),
                 FeedForward(dim, mlp_dim, dropout=dropout)
             ]))
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         x = self.norm(x)
         for att, ff in self.layers:
             x = att(x) + x
@@ -78,7 +78,7 @@ class Transformer(Module):
         return self.norm(x)
 
 class PatchEmbedding(Module):
-    def __init__(self, image_size, patch_size, dim):
+    def __init__(self, image_size, patch_size, dim, channels=3):
         super().__init__()
         self.image_size = pair(image_size)
         self.patch_size = pair(patch_size)
@@ -86,7 +86,7 @@ class PatchEmbedding(Module):
 
         assert self.image_size[0] % self.patch_size[0] == 0 and self.image_size[1] % self.patch_size[1] == 0, "Image dimensions must be divisible by the patch size."
         num_patches = (self.image_size[0] // self.patch_size[0]) * (self.image_size[1] // self.patch_size[1])
-        patch_dim = self.patch_size[0] * self.patch_size[1] * 3 
+        patch_dim = self.patch_size[0] * self.patch_size[1] * channels
         self.projection = nn.Linear(patch_dim, dim)
         
         self.embedding = nn.Sequential(
@@ -96,13 +96,13 @@ class PatchEmbedding(Module):
             nn.LayerNorm(dim)
         )
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.embedding(x)
 
 
 
 class ViT(Module):
-    def __init__(self, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, dropout=0.1, pool="cls"):
+    def __init__(self, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, channels=3, dim_head=64,dropout=0.1, pool="cls"):
         super().__init__()
         assert pool in {'cls', 'mean'}, "Pool type must be either 'cls' or 'mean'"
         self.image_size = pair(image_size)
@@ -119,12 +119,15 @@ class ViT(Module):
         num_cls_tokens = 1 if pool == 'cls' else 0
         self.cls_token = nn.Parameter(torch.randn(num_cls_tokens, dim))
         self.pos_embedding = nn.Parameter(torch.randn(num_patches + num_cls_tokens, dim))
-        self.patch_embedding = PatchEmbedding(self.image_size, self.patch_size, dim)
+        self.patch_embedding = PatchEmbedding(self.image_size, self.patch_size, dim, channels)
         self.dropout = nn.Dropout(dropout)
-        self.transformer = Transformer(dim, depth, heads, mlp_dim, dropout=dropout)
-        self.mlp_head = nn.Linear(dim, num_classes)
+        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout=dropout)
+        self.mlp_head = nn.Sequential(
+            nn.LayerNorm(dim),
+            nn.Linear(dim, num_classes)
+        )
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         b = x.shape[0]
         x = self.patch_embedding(x)
         cls_tokens = repeat(self.cls_token, 'n d -> b n d', b=b)
