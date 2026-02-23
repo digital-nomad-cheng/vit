@@ -20,6 +20,9 @@ dependencies = [
     # uv run python -m spacy download de_core_news_sm
     "timm==1.0.24",
     "einops==0.8.2",
+    "gdown>=5.1.0",
+    "pycocotools>=2.0.8",
+    "scipy>=1.14.0",
 ]
 
 [[tool.uv.index]]
