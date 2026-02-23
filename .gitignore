@@ -211,3 +211,4 @@ __marimo__/
 03_detr_visdrone/data/
 data.zip
 model.pth
+*.jpg
