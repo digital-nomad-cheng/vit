@@ -1,6 +1,8 @@
 # DETR on VisDrone-DET
 
-Train a [DETR](https://arxiv.org/abs/2005.12872) (DEtection TRansformer) from scratch on the [VisDrone-DET](https://github.com/VisDrone/VisDrone-Dataset) dataset for drone-based object detection.
+Fine-tune a [DETR](https://arxiv.org/abs/2005.12872) (DEtection TRansformer) on the [VisDrone-DET](https://github.com/VisDrone/VisDrone-Dataset) dataset for drone-based object detection, using Facebook's COCO-pretrained weights.
+
+The architecture matches the [official DETR implementation](https://github.com/facebookresearch/detr) exactly, enabling direct pretrained weight loading.
 
 ## Classes
 
@@ -25,14 +27,19 @@ uv run python 03_detr_visdrone/visdrone2coco.py
 ## Training
 
 ```bash
-# Default: 150 epochs, batch 4, grad_accum 4 (fits 8 GB VRAM)
-uv run python 03_detr_visdrone/train.py
+# Recommended: Fine-tune from COCO-pretrained DETR-R50 (~160MB download, cached)
+uv run python 03_detr_visdrone/train.py --pretrained-detr --epochs 50
 
-# Custom settings
-uv run python 03_detr_visdrone/train.py --epochs 300 --batch-size 2 --lr 1e-4
+# Head-only fine-tune (fastest — only trains classification head, 2,827 params)
+uv run python 03_detr_visdrone/train.py --pretrained-detr --freeze-all --lr 1e-3 --epochs 10
 
-# Resume from checkpoint
-uv run python 03_detr_visdrone/train.py --resume ./03_detr_visdrone/checkpoints/last.pth
+# Then full fine-tune from the head-only checkpoint
+uv run python 03_detr_visdrone/train.py --pretrained-detr \
+    --resume ./03_detr_visdrone/checkpoints/last.pth \
+    --lr 1e-5 --lr-backbone 1e-6 --epochs 50
+
+# Train from scratch (not recommended — very slow convergence)
+uv run python 03_detr_visdrone/train.py --epochs 300
 ```
 
 ## Evaluation
@@ -56,22 +63,25 @@ uv run python 03_detr_visdrone/visualize.py --checkpoint ./03_detr_visdrone/chec
 ## Architecture
 
 ```
-Image → ResNet-50 → 1×1 Conv (256-d) + 2D Positional Encoding
-      → Transformer Encoder (6 layers)
+Image → ResNet-50 (FrozenBatchNorm2d) → 1×1 Conv (256-d)
+      → PositionEmbeddingSine (2D sinusoidal, normalized)
+      → Transformer Encoder (6 layers, post-norm)
       → Transformer Decoder (6 layers, 100 object queries)
-      → Classification Head (11 classes) + BBox MLP (4 coords)
+      → class_embed (11 classes) + bbox_embed MLP (4 coords)
 ```
 
-**Parameters**: ~41.5M
+**Parameters**: ~41.5M (pretrained from COCO, class_embed randomly initialized)
 
 ## Project Structure
 
 ```
 03_detr_visdrone/
+├── config.py              # Shared constants (classes, normalization)
 ├── download_visdrone.py   # Download dataset from Google Drive
 ├── visdrone2coco.py       # Convert annotations to COCO format
 ├── dataset.py             # Dataset, transforms, collate_fn
-├── detr.py                # DETR model
+├── detr.py                # DETR model (official architecture)
+├── load_pretrained.py     # Download & load COCO-pretrained weights
 ├── matcher.py             # Hungarian bipartite matcher
 ├── losses.py              # CE + L1 + GIoU loss
 ├── train.py               # Training loop

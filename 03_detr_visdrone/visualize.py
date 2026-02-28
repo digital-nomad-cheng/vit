@@ -134,7 +134,7 @@ def main():
                         help="Output directory for visualizations")
     parser.add_argument("--num-images", type=int, default=5,
                         help="Number of random val images to visualize")
-    parser.add_argument("--score-thresh", type=float, default=0.5,
+    parser.add_argument("--score-thresh", type=float, default=0.3,
                         help="Confidence threshold for predictions")
     parser.add_argument("--max-size", type=int, default=800)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -150,7 +150,6 @@ def main():
 
     model = build_detr(
         num_classes=NUM_CLASSES,
-        backbone_name=ckpt_args.get("backbone", "mobilenet_v2"),
         pretrained_backbone=False,
         num_queries=ckpt_args.get("num_queries", 100),
     ).to(device)

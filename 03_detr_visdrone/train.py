@@ -3,7 +3,7 @@ Train DETR on VisDrone-DET dataset.
 
 Usage:
     uv run python 03_detr_visdrone/train.py
-    uv run python 03_detr_visdrone/train.py --epochs 150 --batch-size 4 --lr 1e-4
+    uv run python 03_detr_visdrone/train.py --pretrained-detr --epochs 50
     uv run python 03_detr_visdrone/train.py --resume ./03_detr_visdrone/checkpoints/last.pth
 """
 
@@ -17,9 +17,10 @@ import torch.nn as nn
 
 sys.path.insert(0, os.path.dirname(__file__))
 from dataset import build_dataloaders
-from detr import build_detr, BACKBONES
+from detr import build_detr
 from matcher import HungarianMatcher
 from losses import DETRLoss
+from load_pretrained import load_pretrained_detr
 from config import NUM_CLASSES
 
 
@@ -153,11 +154,10 @@ def parse_args():
     p.add_argument("--max-grad-norm", type=float, default=0.1, help="Max gradient norm for clipping")
     p.add_argument("--num-queries", type=int, default=100, help="Number of object queries")
     p.add_argument("--max-size", type=int, default=800, help="Max image size")
-    p.add_argument("--backbone", choices=BACKBONES, default="mobilenet_v2",
-                    help="Backbone architecture")
-    p.add_argument("--pretrained-backbone", action="store_true", default=True,
-                    help="Use ImageNet-pretrained backbone")
-    p.add_argument("--no-pretrained-backbone", dest="pretrained_backbone", action="store_false")
+    p.add_argument("--pretrained-detr", action="store_true", default=False,
+                    help="Load pretrained DETR-R50 weights (COCO-trained)")
+    p.add_argument("--freeze-all", action="store_true", default=False,
+                    help="Freeze all layers except class_embed (head-only fine-tuning)")
     p.add_argument("--num-workers", type=int, default=4, help="Dataloader workers")
     p.add_argument("--resume", default="", help="Path to checkpoint to resume from")
     p.add_argument("--eval-freq", type=int, default=5, help="Evaluate every N epochs")
@@ -171,7 +171,7 @@ def main():
     os.makedirs(args.ckpt_dir, exist_ok=True)
 
     print(f"Device: {device}")
-    print(f"Config: backbone={args.backbone}, epochs={args.epochs}, batch_size={args.batch_size}, "
+    print(f"Config: epochs={args.epochs}, batch_size={args.batch_size}, "
           f"lr={args.lr}, lr_backbone={args.lr_backbone}, "
           f"grad_accum={args.grad_accum}, num_queries={args.num_queries}")
 
@@ -187,13 +187,23 @@ def main():
     # ----- Model -----
     model = build_detr(
         num_classes=NUM_CLASSES,
-        backbone_name=args.backbone,
-        pretrained_backbone=args.pretrained_backbone,
+        pretrained_backbone=not args.pretrained_detr,  # skip if loading full DETR
         num_queries=args.num_queries,
     ).to(device)
 
+    # Load pretrained DETR weights (COCO-trained)
+    if args.pretrained_detr:
+        load_pretrained_detr(model, num_classes=NUM_CLASSES)
+
+    # Freeze all layers except class_embed (head-only fine-tuning)
+    if args.freeze_all:
+        for name, param in model.named_parameters():
+            if "class_embed" not in name:
+                param.requires_grad_(False)
+        print("Frozen all layers except class_embed")
+
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"Parameters: {n_params:,}")
+    print(f"Trainable parameters: {n_params:,}")
 
     # ----- Loss -----
     matcher = HungarianMatcher(cost_class=1.0, cost_bbox=5.0, cost_giou=2.0)
@@ -205,7 +215,7 @@ def main():
     ).to(device)
 
     # ----- Optimizer -----
-    # Different LR for backbone vs transformer
+    # Different LR for backbone vs transformer/heads
     backbone_params = [p for n, p in model.named_parameters()
                        if "backbone" in n and p.requires_grad]
     other_params = [p for n, p in model.named_parameters()

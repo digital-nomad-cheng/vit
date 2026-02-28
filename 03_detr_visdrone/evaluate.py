@@ -102,10 +102,8 @@ def main():
 
     # Build model
     num_queries = ckpt_args.get("num_queries", 100)
-    backbone_name = ckpt_args.get("backbone", "mobilenet_v2")
     model = build_detr(
         num_classes=NUM_CLASSES,
-        backbone_name=backbone_name,
         pretrained_backbone=False,  # weights come from checkpoint
         num_queries=num_queries,
     ).to(device)
