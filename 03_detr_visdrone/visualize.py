@@ -134,7 +134,7 @@ def main():
                         help="Output directory for visualizations")
     parser.add_argument("--num-images", type=int, default=5,
                         help="Number of random val images to visualize")
-    parser.add_argument("--score-thresh", type=float, default=0.3,
+    parser.add_argument("--score-thresh", type=float, default=0.5,
                         help="Confidence threshold for predictions")
     parser.add_argument("--max-size", type=int, default=800)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
