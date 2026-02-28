@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train (MobileNetV2)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--backbone",
+                "mobilenet_v2",
+                "--epochs",
+                "10",
+                "--batch-size",
+                "2",
+                "--lr",
+                "1e-4",
+                "--grad-accum",
+                "4",
+                "--eval-freq",
+                "5"
+            ]
+        },
+        {
+            "name": "Train (ResNet-50)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--backbone",
+                "resnet50",
+                "--epochs",
+                "10",
+                "--batch-size",
+                "2",
+                "--lr",
+                "1e-4",
+                "--grad-accum",
+                "4",
+                "--eval-freq",
+                "5"
+            ]
+        },
+        {
+            "name": "Evaluate",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "evaluate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--checkpoint",
+                "checkpoints/best.pth"
+            ]
+        },
+    ]
+}
