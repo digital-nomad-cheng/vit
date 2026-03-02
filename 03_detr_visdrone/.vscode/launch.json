@@ -6,6 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "train.py",
+            "python": "${workspaceFolder}/../.venv/bin/python",
             "console": "integratedTerminal",
             "args": [
                 "--backbone",
@@ -27,6 +28,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "train.py",
+            "python": "${workspaceFolder}/../.venv/bin/python",
             "console": "integratedTerminal",
             "args": [
                 "--backbone",
@@ -48,6 +50,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "evaluate.py",
+            "python": "${workspaceFolder}/../.venv/bin/python",
             "console": "integratedTerminal",
             "args": [
                 "--checkpoint",
