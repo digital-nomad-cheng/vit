@@ -1,8 +1,10 @@
-# SegFormer-B0 on ADE20K
+# SegFormer-B0
 
-From-scratch implementation of [SegFormer](https://arxiv.org/abs/2105.15203) (NeurIPS 2021) for semantic segmentation on the [ADE20K](http://sceneparsing.csail.mit.edu/) dataset (150 classes, 20K train / 2K val images).
+From-scratch implementation of [SegFormer](https://arxiv.org/abs/2105.15203) (NeurIPS 2021) for semantic segmentation with a **Mix Transformer (MiT-B0)** hierarchical encoder and **All-MLP decoder** — no positional encodings, no complex decoders.
 
-The model uses a **Mix Transformer (MiT-B0)** hierarchical encoder with an **All-MLP decoder** — no positional encodings, no complex decoders.
+Supports two datasets:
+- **[ADE20K](http://sceneparsing.csail.mit.edu/)** — 150 classes, 20K train / 2K val images (scene parsing)
+- **[EasyPortrait](https://github.com/hukenovs/easyportrait)** — 9 classes, up to 40K images (face parsing & portrait segmentation)
 
 ## Architecture
 
@@ -13,7 +15,7 @@ Image (3×H×W)
   → Stage 3: OverlapPatchEmbed(3×3, s=2) → 2× TransformerBlock → 160×H/16×W/16
   → Stage 4: OverlapPatchEmbed(3×3, s=2) → 2× TransformerBlock → 256×H/32×W/32
   → MLP Decoder: project all stages → 256-d, upsample to H/4, concat, fuse
-  → Output: 150×H/4×W/4 (upsample to full res for final prediction)
+  → Output: C×H/4×W/4 (C=num_classes, upsample to full res for final prediction)
 ```
 
 Each TransformerBlock: `LayerNorm → EfficientSelfAttention → LayerNorm → MixFFN`
@@ -23,17 +25,39 @@ Each TransformerBlock: `LayerNorm → EfficientSelfAttention → LayerNorm → M
 
 **Parameters**: 3.75M (3.3M encoder + 0.4M decoder)
 
-## Setup
+## Datasets
+
+### ADE20K
 
 ```bash
-# Download ADE20K dataset (~923 MB)
-uv run python 04_segformer_ade20k/download_ade20k.py
+# Download (~923 MB)
+uv run python 04_segformer_ade20k/scripts/download_ade20k.py
 ```
+
+### EasyPortrait
+
+9-class face parsing dataset: background, person, face skin, left/right brow, left/right eye, lips, teeth.
+
+```bash
+# Download v2 (default, 40k images, ~92 GB)
+uv run python 04_segformer_ade20k/scripts/download_easyportrait.py
+
+# Download v1 (20k images, ~26 GB)
+uv run python 04_segformer_ade20k/scripts/download_easyportrait.py --version v1
+
+# Custom data directory
+uv run python 04_segformer_ade20k/scripts/download_easyportrait.py --data-dir ./my_data
+```
+
+| Version | Train | Val | Test | Size |
+|---------|-------|-----|------|------|
+| v1      | 14k   | 2k  | 4k   | ~26 GB |
+| v2      | 30k   | 4k  | 6k   | ~92 GB |
 
 ## Training
 
 ```bash
-# Train from scratch
+# Train on ADE20K from scratch
 uv run python 04_segformer_ade20k/train.py --epochs 160 --batch-size 8
 
 # Fine-tune from HuggingFace pretrained weights (needs: uv pip install huggingface_hub)
@@ -59,9 +83,13 @@ uv run python 04_segformer_ade20k/train.py --batch-size 2 --grad-accum 4
 
 ```
 04_segformer_ade20k/
-├── segformer.py          # SegFormer-B0 model (encoder + decoder)
-├── dataset.py            # ADE20K dataset, transforms, dataloaders
-├── train.py              # Training loop with mIoU evaluation
-├── download_ade20k.py    # Download ADE20K dataset
+├── segformer.py                       # SegFormer-B0 model (encoder + decoder)
+├── train.py                           # Training loop with mIoU evaluation
+├── dataset/
+│   ├── ade20k.py                      # ADE20K dataset, transforms, dataloaders
+│   └── easyportrait.py                # EasyPortrait dataset, transforms, dataloaders
+├── scripts/
+│   ├── download_ade20k.py             # Download ADE20K dataset
+│   └── download_easyportrait.py       # Download EasyPortrait dataset (v1/v2)
 └── README.md
 ```

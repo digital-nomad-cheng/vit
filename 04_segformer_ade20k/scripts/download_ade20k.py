@@ -4,8 +4,8 @@ Download ADE20K dataset (ADEChallengeData2016).
 Downloads the ~923 MB zip file and extracts it into the data/ directory.
 
 Usage:
-    uv run python 04_segformer_ade20k/download_ade20k.py
-    uv run python 04_segformer_ade20k/download_ade20k.py --data-dir ./my_data
+    uv run python 04_segformer_ade20k/scripts/download_ade20k.py
+    uv run python 04_segformer_ade20k/scripts/download_ade20k.py --data-dir ./my_data
 """
 
 import argparse
@@ -68,7 +68,7 @@ def main():
     parser = argparse.ArgumentParser(description="Download ADE20K dataset")
     parser.add_argument(
         "--data-dir",
-        default=os.path.join(os.path.dirname(__file__), "data"),
+        default=os.path.join(os.path.dirname(__file__), "..", "data"),
         help="Directory to download dataset into",
     )
     args = parser.parse_args()

@@ -7,7 +7,7 @@ Usage:
     uv run python 04_segformer_ade20k/train.py --batch-size 8 --lr 6e-5
 
 Prerequisites:
-    1. Download ADE20K: uv run python 04_segformer_ade20k/download_ade20k.py
+    1. Download ADE20K: uv run python 04_segformer_ade20k/scripts/download_ade20k.py
     2. (Optional) Install huggingface_hub for pretrained weights:
        uv pip install huggingface_hub
 """
@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 
 sys.path.insert(0, os.path.dirname(__file__))
 from segformer import segformer_b0, load_pretrained_segformer_b0
-from dataset import build_dataloaders, NUM_CLASSES, IGNORE_INDEX
+from dataset.ade20k import build_dataloaders, NUM_CLASSES, IGNORE_INDEX
 
 
 # ---------------------------------------------------------------------------
