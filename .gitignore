@@ -212,3 +212,4 @@ __marimo__/
 data.zip
 model.pth
 *.jpg
+04_segformer_ade20k/data/
